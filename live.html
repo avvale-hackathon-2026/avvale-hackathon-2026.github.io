@@ -358,6 +358,12 @@ setInterval(loop,1000);
 loop();
 showScene(0);
 
+// Fuerza actualización cuando la ventana vuelve a primer plano (evita throttling de DisplayNote)
+document.addEventListener('visibilitychange', function() {
+  if (!document.hidden) { loop(); }
+});
+window.addEventListener('focus', function() { loop(); });
+
 // ── AUDIO ────────────────────────────────────────────────────────────────────
 var ac=null,masterG=null,muted=false;
 function initAudio(){
