@@ -230,28 +230,32 @@ function getPhase(now){
 // Scenes: A=logo(8s), B=date(6s), C=teams(12s), D=prize(7s), E=status(10s)
 var SCENE_IDS  = ['sA','sB','sC','sD','sE'];
 var SCENE_DURS = [8000, 6500, 12000, 7000, 10000];
-var curScene = 0, rotTimer = null;
+var curScene = 0, sceneStartedAt = 0, transitioning = false;
 
 function showScene(idx){
   SCENE_IDS.forEach(function(id){ $(id).classList.remove('active'); });
-  // reset team cards
   document.querySelectorAll('.tc').forEach(function(c){ c.classList.remove('show'); });
   curScene = idx;
+  sceneStartedAt = Date.now();
+  transitioning = false;
   var el = $(SCENE_IDS[idx]);
   el.classList.add('active');
-  // stagger team cards in scene C
   if(idx===2){
     document.querySelectorAll('.tc').forEach(function(c){
       var d = parseInt(c.dataset.d||0)+600;
       setTimeout(function(){ c.classList.add('show'); }, d);
     });
   }
-  // schedule next
-  clearTimeout(rotTimer);
-  rotTimer = setTimeout(function(){
-    el.classList.remove('active');
-    setTimeout(function(){ showScene((idx+1)%SCENE_IDS.length); }, 700);
-  }, SCENE_DURS[idx]);
+}
+
+function tickScene(){
+  if(transitioning) return;
+  var elapsed = Date.now() - sceneStartedAt;
+  if(elapsed >= SCENE_DURS[curScene]){
+    transitioning = true;
+    $(SCENE_IDS[curScene]).classList.remove('active');
+    setTimeout(function(){ showScene((curScene+1)%SCENE_IDS.length); }, 700);
+  }
 }
 
 // ── STATUS SCENE (sE) HTML ───────────────────────────────────────────────────
@@ -353,6 +357,7 @@ function loop(){
   var phase=getPhase(now);
   if(phase.type!==lastStatusType) buildStatus(phase);
   tickStatus(phase,now);
+  tickScene();
 }
 loop();
 showScene(0);
